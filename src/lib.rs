@@ -5,7 +5,7 @@ use std::error::Error;
 
 #[allow(dead_code)]
 #[derive(Deserialize, Debug)]
-struct Canteen {
+pub struct Canteen {
     id: u32,
     name: String,
     city: String,
@@ -15,7 +15,7 @@ struct Canteen {
 
 #[allow(dead_code)]
 #[derive(Deserialize, Debug)]
-struct Prices {
+pub struct Prices {
     students: f64,
     employees: f64,
     pupils: Option<f64>,
@@ -24,7 +24,7 @@ struct Prices {
 
 #[allow(dead_code)]
 #[derive(Deserialize, Debug)]
-struct Meal {
+pub struct Meal {
     id: u32,
     name: String,
     category: String,
@@ -42,25 +42,7 @@ async fn fetch<T: for<'de> Deserialize<'de>>(url: &str) -> Result<T, Box<dyn Err
     Ok(result)
 }
 
-fn get_dresden_canteens(canteens: Vec<Canteen>) -> Vec<Canteen> {
-    let mut dresden = vec![];
-    for canteen in canteens {
-        if canteen.city == "Dresden" {
-            let name_parts: Vec<&str> = canteen.name.split(',').collect();
-            let name = name_parts.get(1).unwrap_or(&"").to_owned();
-            dresden.push(Canteen {
-                id: canteen.id,
-                name: name.to_string(),
-                city: canteen.city.clone(),
-                address: canteen.address.clone(),
-                coordinates: canteen.coordinates,
-            });
-        }
-    }
-    dresden
-}
-
-async fn get_menu(canteen: &Canteen, date: NaiveDate) -> Vec<Meal> {
+pub async fn get_meals(canteen: &Canteen, date: NaiveDate) -> Vec<Meal> {
     let canteen_id = canteen.id;
     let menu_url = format!(
         "https://openmensa.org/api/v2/canteens/{}/days/{}/meals",
@@ -76,25 +58,32 @@ async fn get_menu(canteen: &Canteen, date: NaiveDate) -> Vec<Meal> {
     }
 }
 
-pub async fn list_dresden_canteens() {
-    let canteens_url = "https://openmensa.org/api/v2/canteens/";
-    let dresden_canteens = match fetch::<Vec<Canteen>>(canteens_url).await {
-        Ok(all_canteens) => get_dresden_canteens(all_canteens),
+pub fn get_canteens(canteens: Vec<Canteen>, location: &str) -> Vec<Canteen> {
+    let mut city = vec![];
+    for canteen in canteens {
+        if canteen.city == location {
+            let name_parts: Vec<&str> = canteen.name.split(',').collect();
+            let name = name_parts.get(1).unwrap_or(&"").to_owned();
+            city.push(Canteen {
+                id: canteen.id,
+                name: name.to_string(),
+                city: canteen.city.clone(),
+                address: canteen.address.clone(),
+                coordinates: canteen.coordinates,
+            });
+        }
+    }
+    city
+}
+
+pub async fn get_all_canteens() -> Vec<Canteen> {
+    let canteens_url = "https://openmensa.org/api/v2/canteens";
+
+    match fetch(&canteens_url).await {
+        Ok(canteens) => canteens,
         Err(err) => {
             println!("ERROR: {}", err);
             Vec::new() // Return an empty vector or handle error differently
         }
-    };
-
-    for canteen in dresden_canteens {
-        let date = Local::now().date_naive();
-        for menu in get_menu(&canteen, date).await {
-            println!("{:?}", menu);
-        }
     }
-}
-
-pub async fn main() -> Result<(), Box<dyn Error>> {
-    list_dresden_canteens().await;
-    Ok(())
 }
