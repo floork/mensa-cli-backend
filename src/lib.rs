@@ -42,20 +42,14 @@ async fn fetch<T: for<'de> Deserialize<'de>>(url: &str) -> Result<T, Box<dyn Err
     Ok(result)
 }
 
-pub async fn get_meals(canteen: &Canteen, date: NaiveDate) -> Vec<Meal> {
+pub async fn get_meals(canteen: &Canteen, date: NaiveDate) -> Result<Vec<Meal>, Box<dyn Error>> {
     let canteen_id = canteen.id;
     let menu_url = format!(
         "https://openmensa.org/api/v2/canteens/{}/days/{}/meals",
         canteen_id, date
     );
 
-    match fetch(&menu_url).await {
-        Ok(menus) => menus,
-        Err(err) => {
-            println!("ERROR: {}", err);
-            Vec::new() // Return an empty vector or handle error differently
-        }
-    }
+    fetch(&menu_url).await
 }
 
 pub fn get_canteens(canteens: Vec<Canteen>, location: &str) -> Vec<Canteen> {
