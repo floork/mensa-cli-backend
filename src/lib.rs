@@ -76,14 +76,8 @@ pub fn get_canteens(canteens: Vec<Canteen>, location: &str) -> Vec<Canteen> {
     city
 }
 
-pub async fn get_all_canteens() -> Vec<Canteen> {
+pub async fn get_all_canteens() -> Result<Vec<Canteen>, Box<dyn Error>> {
     let canteens_url = "https://openmensa.org/api/v2/canteens";
 
-    match fetch(&canteens_url).await {
-        Ok(canteens) => canteens,
-        Err(err) => {
-            println!("ERROR: {}", err);
-            Vec::new() // Return an empty vector or handle error differently
-        }
-    }
+    fetch(&canteens_url).await
 }
