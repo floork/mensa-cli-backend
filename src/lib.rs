@@ -25,7 +25,7 @@ pub struct Prices {
 #[allow(dead_code)]
 #[derive(Deserialize, Debug)]
 pub struct Meal {
-    id: u16,
+    id: u32,
     name: String,
     category: String,
     prices: Prices,
