@@ -1,6 +1,5 @@
-use serde::Deserialize;
-extern crate chrono;
 use chrono::prelude::*;
+use serde::Deserialize;
 use std::error::Error;
 
 #[allow(dead_code)]
