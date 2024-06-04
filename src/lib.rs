@@ -6,7 +6,7 @@ use std::error::Error;
 #[allow(dead_code)]
 #[derive(Deserialize, Debug)]
 pub struct Canteen {
-    id: u32,
+    id: u16,
     name: String,
     city: String,
     address: String,
@@ -25,7 +25,7 @@ pub struct Prices {
 #[allow(dead_code)]
 #[derive(Deserialize, Debug)]
 pub struct Meal {
-    id: u32,
+    id: u16,
     name: String,
     category: String,
     prices: Prices,
@@ -52,8 +52,39 @@ pub async fn get_meals(canteen: &Canteen, date: NaiveDate) -> Result<Vec<Meal>, 
     fetch(&menu_url).await
 }
 
-pub fn get_canteens(canteens: Vec<Canteen>, location: &str) -> Vec<Canteen> {
+pub async fn get_canteens_by_id(id: u16) -> Result<Vec<Canteen>, Box<dyn Error>> {
     let mut city = vec![];
+
+    let canteens = get_all_canteens().await?;
+
+    for canteen in canteens {
+        if canteen.id == id {
+            city.push(canteen);
+        }
+    }
+
+    Ok(city)
+}
+
+pub async fn get_canteens_by_ids(ids: Vec<u16>) -> Result<Vec<Canteen>, Box<dyn Error>> {
+    let mut city = vec![];
+
+    let canteens = get_all_canteens().await?;
+
+    for canteen in canteens {
+        if ids.contains(&canteen.id) {
+            city.push(canteen);
+        }
+    }
+
+    Ok(city)
+}
+
+pub async fn get_canteens_by_location(location: &str) -> Result<Vec<Canteen>, Box<dyn Error>> {
+    let mut city = vec![];
+
+    let canteens = get_all_canteens().await.unwrap();
+
     for canteen in canteens {
         if canteen.city == location {
             let name_parts: Vec<&str> = canteen.name.split(',').collect();
@@ -67,7 +98,7 @@ pub fn get_canteens(canteens: Vec<Canteen>, location: &str) -> Vec<Canteen> {
             });
         }
     }
-    city
+    Ok(city)
 }
 
 pub async fn get_all_canteens() -> Result<Vec<Canteen>, Box<dyn Error>> {
