@@ -1,6 +1,5 @@
 use reqwest::Error;
 use serde::Deserialize;
-use std::error::Error as StdError;
 
 #[allow(dead_code)]
 #[derive(Deserialize, Debug)]
@@ -29,18 +28,6 @@ pub struct Meal {
     category: String,
     prices: Prices,
     notes: Vec<String>,
-}
-
-async fn fetch<T: for<'de> Deserialize<'de>>(
-    url: &str,
-) -> Result<T, Box<dyn StdError + Send + Sync>> {
-    let response = reqwest::get(url).await?;
-    if !response.status().is_success() {
-        return Err(format!("Failed to get response: {}", response.status()).into());
-    }
-    let response_text = response.text().await?;
-    let result: T = serde_json::from_str(&response_text)?;
-    Ok(result)
 }
 
 pub async fn get_meals(canteen: &Canteen, date: &str) -> Result<Vec<Meal>, Error> {
@@ -105,5 +92,9 @@ pub async fn get_canteens_by_location(location: &str) -> Result<Vec<Canteen>, Er
 pub async fn get_all_canteens() -> Result<Vec<Canteen>, Error> {
     let canteens_url = "https://openmensa.org/api/v2/canteens";
 
-    fetch(&canteens_url).await
+    let response = reqwest::get(canteens_url)
+        .await?
+        .json::<Vec<Canteen>>()
+        .await?;
+    Ok(response)
 }
