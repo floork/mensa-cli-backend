@@ -1,11 +1,11 @@
-use chrono::prelude::*;
+use reqwest::Error;
 use serde::Deserialize;
-use std::error::Error;
+use std::error::Error as StdError;
 
 #[allow(dead_code)]
 #[derive(Deserialize, Debug)]
 pub struct Canteen {
-    id: u16,
+    id: u32,
     name: String,
     city: String,
     address: String,
@@ -31,7 +31,9 @@ pub struct Meal {
     notes: Vec<String>,
 }
 
-async fn fetch<T: for<'de> Deserialize<'de>>(url: &str) -> Result<T, Box<dyn Error>> {
+async fn fetch<T: for<'de> Deserialize<'de>>(
+    url: &str,
+) -> Result<T, Box<dyn StdError + Send + Sync>> {
     let response = reqwest::get(url).await?;
     if !response.status().is_success() {
         return Err(format!("Failed to get response: {}", response.status()).into());
@@ -41,17 +43,17 @@ async fn fetch<T: for<'de> Deserialize<'de>>(url: &str) -> Result<T, Box<dyn Err
     Ok(result)
 }
 
-pub async fn get_meals(canteen: &Canteen, date: NaiveDate) -> Result<Vec<Meal>, Box<dyn Error>> {
+pub async fn get_meals(canteen: &Canteen, date: &str) -> Result<Vec<Meal>, Error> {
     let canteen_id = canteen.id;
     let menu_url = format!(
         "https://openmensa.org/api/v2/canteens/{}/days/{}/meals",
         canteen_id, date
     );
-
-    fetch(&menu_url).await
+    let response = reqwest::get(&menu_url).await?.json::<Vec<Meal>>().await?;
+    Ok(response)
 }
 
-pub async fn get_canteens_by_id(id: u16) -> Result<Vec<Canteen>, Box<dyn Error>> {
+pub async fn get_canteens_by_id(id: u32) -> Result<Vec<Canteen>, Error> {
     let mut city = vec![];
 
     let canteens = get_all_canteens().await?;
@@ -65,7 +67,7 @@ pub async fn get_canteens_by_id(id: u16) -> Result<Vec<Canteen>, Box<dyn Error>>
     Ok(city)
 }
 
-pub async fn get_canteens_by_ids(ids: Vec<u16>) -> Result<Vec<Canteen>, Box<dyn Error>> {
+pub async fn get_canteens_by_ids(ids: Vec<u32>) -> Result<Vec<Canteen>, Error> {
     let mut city = vec![];
 
     let canteens = get_all_canteens().await?;
@@ -79,7 +81,7 @@ pub async fn get_canteens_by_ids(ids: Vec<u16>) -> Result<Vec<Canteen>, Box<dyn 
     Ok(city)
 }
 
-pub async fn get_canteens_by_location(location: &str) -> Result<Vec<Canteen>, Box<dyn Error>> {
+pub async fn get_canteens_by_location(location: &str) -> Result<Vec<Canteen>, Error> {
     let mut city = vec![];
 
     let canteens = get_all_canteens().await.unwrap();
@@ -100,7 +102,7 @@ pub async fn get_canteens_by_location(location: &str) -> Result<Vec<Canteen>, Bo
     Ok(city)
 }
 
-pub async fn get_all_canteens() -> Result<Vec<Canteen>, Box<dyn Error>> {
+pub async fn get_all_canteens() -> Result<Vec<Canteen>, Error> {
     let canteens_url = "https://openmensa.org/api/v2/canteens";
 
     fetch(&canteens_url).await
