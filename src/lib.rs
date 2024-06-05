@@ -13,18 +13,18 @@ pub struct Canteen {
 }
 
 #[allow(dead_code)]
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Deserialize)]
 pub struct Prices {
-    students: f64,
-    employees: f64,
+    students: Option<f64>,
+    employees: Option<f64>,
     pupils: Option<f64>,
-    others: f64,
+    others: Option<f64>,
 }
 
 #[allow(dead_code)]
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Deserialize)]
 pub struct Meal {
-    id: u32,
+    id: u64,
     name: String,
     category: String,
     prices: Prices,
