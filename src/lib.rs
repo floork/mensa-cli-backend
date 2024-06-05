@@ -30,71 +30,52 @@ pub struct Meal {
     notes: Vec<String>,
 }
 
+async fn fetch_from_api<T: for<'de> Deserialize<'de>>(url: &str) -> Result<T, Error> {
+    let response = reqwest::get(url).await?.json::<T>().await?;
+    Ok(response)
+}
+
 pub async fn get_meals(canteen: &Canteen, date: &str) -> Result<Vec<Meal>, Error> {
     let canteen_id = canteen.id;
     let menu_url = format!(
         "https://openmensa.org/api/v2/canteens/{}/days/{}/meals",
         canteen_id, date
     );
-    let response = reqwest::get(&menu_url).await?.json::<Vec<Meal>>().await?;
-    Ok(response)
+    fetch_from_api(&menu_url).await
 }
 
 pub async fn get_canteens_by_id(id: u32) -> Result<Vec<Canteen>, Error> {
-    let mut city = vec![];
-
     let canteens = get_all_canteens().await?;
-
-    for canteen in canteens {
-        if canteen.id == id {
-            city.push(canteen);
-        }
-    }
-
+    let city: Vec<Canteen> = canteens.into_iter().filter(|c| c.id == id).collect();
     Ok(city)
 }
 
 pub async fn get_canteens_by_ids(ids: Vec<u32>) -> Result<Vec<Canteen>, Error> {
-    let mut city = vec![];
-
     let canteens = get_all_canteens().await?;
-
-    for canteen in canteens {
-        if ids.contains(&canteen.id) {
-            city.push(canteen);
-        }
-    }
-
+    let city: Vec<Canteen> = canteens
+        .into_iter()
+        .filter(|c| ids.contains(&c.id))
+        .collect();
     Ok(city)
 }
 
 pub async fn get_canteens_by_location(location: &str) -> Result<Vec<Canteen>, Error> {
-    let mut city = vec![];
-
-    let canteens = get_all_canteens().await.unwrap();
-
-    for canteen in canteens {
-        if canteen.city == location {
-            let name_parts: Vec<&str> = canteen.name.split(',').collect();
-            let name = name_parts.get(1).unwrap_or(&"").to_owned();
-            city.push(Canteen {
-                id: canteen.id,
-                name: name.to_string(),
-                city: canteen.city.clone(),
-                address: canteen.address.clone(),
-                coordinates: canteen.coordinates,
-            });
-        }
-    }
+    let canteens = get_all_canteens().await?;
+    let city: Vec<Canteen> = canteens
+        .into_iter()
+        .filter(|c| c.city == location)
+        .map(|c| Canteen {
+            id: c.id,
+            name: c.name.split(',').nth(1).unwrap_or("").to_owned(),
+            city: c.city.clone(),
+            address: c.address.clone(),
+            coordinates: c.coordinates,
+        })
+        .collect();
     Ok(city)
 }
 
 pub async fn get_all_canteens() -> Result<Vec<Canteen>, Error> {
     let canteens_url = "https://openmensa.org/api/v2/canteens";
-
-    let response = reqwest::get(canteens_url)
-        .await?
-        .json::<Vec<Canteen>>()
-        .await?;
-    Ok(response)
+    fetch_from_api(&canteens_url).await
 }
