@@ -4,30 +4,30 @@ use serde::Deserialize;
 #[allow(dead_code)]
 #[derive(Deserialize, Debug)]
 pub struct Canteen {
-    id: u32,
-    name: String,
-    city: String,
-    address: String,
-    coordinates: Option<[f64; 2]>,
+    pub id: u32,
+    pub name: String,
+    pub city: String,
+    pub address: String,
+    pub coordinates: Option<[f64; 2]>,
 }
 
 #[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct Prices {
-    students: Option<f64>,
-    employees: Option<f64>,
-    pupils: Option<f64>,
-    others: Option<f64>,
+    pub students: Option<f64>,
+    pub employees: Option<f64>,
+    pub pupils: Option<f64>,
+    pub others: Option<f64>,
 }
 
 #[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct Meal {
-    id: u64,
-    name: String,
-    category: String,
-    prices: Prices,
-    notes: Vec<String>,
+    pub id: u64,
+    pub name: String,
+    pub category: String,
+    pub prices: Prices,
+    pub notes: Vec<String>,
 }
 
 async fn fetch_from_api<T: for<'de> Deserialize<'de>>(url: &str) -> Result<T, Error> {
