@@ -59,6 +59,14 @@ pub async fn get_canteens_by_ids(ids: Vec<u32>) -> Result<Vec<Canteen>, Error> {
     Ok(city)
 }
 
+pub async fn get_canteen_by_name(name: &str) -> Option<Canteen> {
+    let all_canteens = get_all_canteens().await.ok()?;
+
+    let canteen = all_canteens.into_iter().find(|c| c.name == name);
+
+    canteen
+}
+
 pub async fn get_canteens_by_location(location: &str) -> Result<Vec<Canteen>, Error> {
     let canteens = get_all_canteens().await?;
     let city: Vec<Canteen> = canteens
